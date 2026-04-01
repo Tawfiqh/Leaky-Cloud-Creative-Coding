@@ -2,13 +2,13 @@
 
 ## What We're Building
 
-A small p5.js top-down exploration sketch: move on a tile map, face directions, and patch **broken pipe** tiles. A **deadline timer** (starting at 30s) counts down; patching adds time and restores **cloud bits**; random pipe breaks drain bits. The HUD shows time (Matrix green), score, and cloud pips. The view **shakes** more as time runs out. Game over shows **Kernel Panic**. The playable build lives under **`public/`** as **`index.html`** (plus the three `.js` files next to it). You can preview locally with **`npm run pages:dev`** (Wrangler serves the `public` folder). Production deploy uses **Cloudflare Pages** via **`npm run deploy`** after **`npx wrangler login`** (see `wrangler.toml` for the project name, default **`creative-coding`**).
+A small p5.js top-down exploration sketch: move on a tile map, face directions, and patch **broken pipe** tiles. A **deadline timer** (starting at 15s) counts down; patching adds time and restores **cloud bits**; random pipe breaks drain bits. The HUD shows time (Matrix green), score, and cloud pips. The view **shakes** more as time runs out. Game over shows **Kernel Panic**. The playable build lives under **`public/`** as **`index.html`** (plus the three `.js` files next to it). You can preview locally with **`npm run pages:dev`** (Wrangler serves the `public` folder). Production deploy uses **Cloudflare Pages** via **`npm run deploy`** after **`npx wrangler login`** (see `wrangler.toml` for the project name, default **`creative-coding`**).
 
 ## How It Works (High Level)
 
 1. `setup()` creates the canvas, registers keyboard input, **`buildRandomMapGrid()`** fills a new **29×16** tile map (border walls, random hollow room outlines, small wall clusters, shuffled pipe tiles), then places the player on the first walkable grass tile (top-left scan order; the **2×2** cell at `(1,1)` is forced to grass so spawn stays clear).
 2. Each frame, if time remains, `readInputAxes()` turns held movement keys into a direction vector, then `tryMove()` applies speed and collision.
-3. The camera follows the player. The world and player are drawn inside a `translate(shake)` so the whole playfield jitters; shake amplitude scales with **panic factor** \(1 - t/30\) squared.
+3. The camera follows the player. The world and player are drawn inside a `translate(shake)` so the whole playfield jitters; shake amplitude scales with **panic factor** \(1 - t/15\) squared.
 4. The HUD draws instructions, score, cloud bits, the countdown (top right), optional interact messages, and when the game ends **`drawKernelPanicBackground()`** (dark red radial vignette, faint horizontal scanlines, sparse Matrix-green noise pixels, double border) then the **Kernel Panic** text stack.
 
 ## Key Decisions & Why
@@ -26,7 +26,7 @@ A small p5.js top-down exploration sketch: move on a tile map, face directions, 
 
 ### Countdown + screen shake (tension)
 
-- **Chosen:** Deadline `gameEndMs` set in `setup()`; remaining time = `(gameEndMs - millis()) / 1000`. Patching moves `gameEndMs` forward. Panic factor = `1 - remaining / 30` (clamped); shake uses `(panicFactor ** 2) * 14` pixels per axis.
+- **Chosen:** Deadline `gameEndMs` set in `setup()`; remaining time = `(gameEndMs - millis()) / 1000`. Patching moves `gameEndMs` forward. Panic factor = `1 - remaining / 15` (clamped); shake uses `(panicFactor ** 2) * 14` pixels per axis.
 - **Alternatives:** Frame-based timer (drops when tab is hidden); CSS shake on `<canvas>` (would not move HUD separately unless split).
 - **Why:** Real-time seconds match player expectations; separating shake into `push`/`translate`/`pop` around world + player keeps HUD labels readable.
 - **Tradeoff:** Timer includes time spent reading the first frame; no pause key yet.

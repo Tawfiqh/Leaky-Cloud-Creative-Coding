@@ -4,7 +4,7 @@ Panic
 
 Game - Top down RPG
 ✅ - Fix player movement
-✅ - Timer that starts at 30 seconds and goes down over time
+✅ - Timer that starts at 15 seconds and goes down over time
 ✅ - Game panics as you get closer to the end = Timer + Shakes as the timer gets closer to zero
 
 Basic Game loop:

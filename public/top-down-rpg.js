@@ -1,4 +1,4 @@
-const TIMER_START_SEC = 30;
+const TIMER_START_SEC = 15;
 const TIME_BONUS_PER_FIX_SEC = 7;
 
 const CLOUD_BITS_MAX = 8;
