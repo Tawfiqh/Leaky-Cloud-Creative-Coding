@@ -119,9 +119,11 @@ function tryInteract() {
 
   const n = facingNeighborTile();
   const t = tileWorld(n.tx, n.ty);
-  if (t === 2) {
-    messageText = "The ancient seal hums… (interact)";
-    messageUntil = now + 2800;
+  if (t === 3) {
+    if (patchBrokenPipeAt(n.tx, n.ty)) {
+      messageText = "Pipe patched!";
+      messageUntil = now + 2600;
+    }
   }
 }
 

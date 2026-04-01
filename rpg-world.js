@@ -28,12 +28,17 @@ let mapGrid;
 
 function initWorldMap() {
   mapGrid = [];
+  scheduleNextPipeBreak();
   for (let ty = 0; ty < MAP_H; ty++) {
     const row = [];
     const s = MAP_ROWS[ty];
     for (let tx = 0; tx < MAP_W; tx++) {
       const c = s[tx];
-      row.push(c === "0" || c === " " ? 0 : c === "2" ? 2 : 1);
+      let v = 1;
+      if (c === "0" || c === " ") v = 0;
+      else if (c === "2") v = 2;
+      else if (c === "3") v = 3;
+      row.push(v);
     }
     mapGrid.push(row);
   }
@@ -53,6 +58,11 @@ function tileWorld(tx, ty) {
   return mapGrid[ty][tx];
 }
 
+/** 0 = walkable; 1–3 = blocked (walls + pipes). */
+function isWalkableTile(tileType) {
+  return tileType === 0;
+}
+
 function rectHitsBlocking(x, y, w, h) {
   const x0 = floor(x / TILE_SIZE);
   const y0 = floor(y / TILE_SIZE);
@@ -60,10 +70,46 @@ function rectHitsBlocking(x, y, w, h) {
   const y1 = floor((y + h - 0.001) / TILE_SIZE);
   for (let ty = y0; ty <= y1; ty++) {
     for (let tx = x0; tx <= x1; tx++) {
-      if (tileWorld(tx, ty) !== 0) return true;
+      if (!isWalkableTile(tileWorld(tx, ty))) return true;
     }
   }
   return false;
+}
+
+const PIPE_BREAK_MIN_MS = 3500;
+const PIPE_BREAK_MAX_MS = 11000;
+let pipeBreakDueAtMs = 0;
+
+function scheduleNextPipeBreak() {
+  pipeBreakDueAtMs = millis() + random(PIPE_BREAK_MIN_MS, PIPE_BREAK_MAX_MS);
+}
+
+function collectPipeTilesOfType(typeId) {
+  const list = [];
+  for (let ty = 0; ty < MAP_H; ty++) {
+    for (let tx = 0; tx < MAP_W; tx++) {
+      if (mapGrid[ty][tx] === typeId) list.push({ tx, ty });
+    }
+  }
+  return list;
+}
+
+function updateRandomPipeBreaks() {
+  if (typeof remainingSeconds === "function" && remainingSeconds() <= 0) return;
+  if (millis() < pipeBreakDueAtMs) return;
+  scheduleNextPipeBreak();
+
+  const intact = collectPipeTilesOfType(2);
+  if (intact.length === 0) return;
+  const pick = random(intact);
+  mapGrid[pick.ty][pick.tx] = 3;
+}
+
+function patchBrokenPipeAt(tx, ty) {
+  if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) return false;
+  if (mapGrid[ty][tx] !== 3) return false;
+  mapGrid[ty][tx] = 2;
+  return true;
 }
 
 function cameraOffsetForPlayer(px, py, pw, ph) {
@@ -132,26 +178,49 @@ function drawWallTile(screenX, screenY) {
   rect(screenX + 2, screenY + 2, TILE_SIZE - 4, 8);
 }
 
-function drawRuneTile(screenX, screenY) {
-  fill(32, 26, 52);
+/** Mario-style green pipe (top-down): solid cylinder segment, blocked. */
+function drawPipeTile(screenX, screenY) {
+  fill(34, 112, 58);
   rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+  stroke(12, 52, 28);
+  strokeWeight(2);
+  fill(52, 168, 88);
+  rect(screenX + 4, screenY + 8, TILE_SIZE - 8, TILE_SIZE - 16, 6);
+  noStroke();
+  fill(120, 220, 150, 110);
+  rect(screenX + 8, screenY + 10, TILE_SIZE - 22, TILE_SIZE - 20, 4);
+  stroke(12, 52, 28);
+  strokeWeight(2);
+  noFill();
+  rect(screenX + 4, screenY + 8, TILE_SIZE - 8, TILE_SIZE - 16, 6);
+  stroke(18, 70, 38);
+  line(screenX + 6, screenY + TILE_SIZE / 2, screenX + TILE_SIZE - 6, screenY + TILE_SIZE / 2);
+  noStroke();
+  fill(28, 96, 48);
+  ellipse(screenX + 7, screenY + TILE_SIZE / 2, 5, 12);
+  ellipse(screenX + TILE_SIZE - 7, screenY + TILE_SIZE / 2, 5, 12);
+}
+
+/** Broken pipe: crack + leak hint; still blocked until patched. */
+function drawBrokenPipeTile(screenX, screenY, tx, ty) {
+  drawPipeTile(screenX, screenY);
   push();
   translate(screenX + TILE_SIZE / 2, screenY + TILE_SIZE / 2);
+  stroke(40, 40, 48);
+  strokeWeight(2.5);
   noFill();
-  stroke(212, 168, 96, 235);
-  strokeWeight(2);
-  for (let r = 8; r < TILE_SIZE / 2; r += 7) {
-    arc(0, 0, r * 2, r * 2, -PI * 0.75, -PI * 0.25);
-  }
-  stroke(110, 210, 198, 200);
+  line(-10, -6, 4, 8);
+  line(4, 8, 14, -4);
+  stroke(255, 180, 60, 200);
   strokeWeight(1.5);
-  for (let a = 0; a < 6; a++) {
-    const ang = (TWO_PI / 6) * a - HALF_PI;
-    line(cos(ang) * 6, sin(ang) * 6, cos(ang) * 16, sin(ang) * 16);
-  }
-  fill(255, 248, 220, 100);
+  line(-8, -4, 2, 10);
   noStroke();
-  ellipse(0, 0, 10, 10);
+  const s = tx * 313 + ty * 919;
+  fill(120, 200, 255, 200);
+  for (let i = 0; i < 3; i++) {
+    const dy = 10 + (i * 7 + (s >> i) % 5) % 8;
+    ellipse(6 + i * 5 - 8, dy - 6, 3, 5);
+  }
   pop();
 }
 
@@ -163,8 +232,10 @@ function drawTile(tx, ty, type, ox, oy) {
     drawGrassTile(screenX, screenY, tx, ty);
   } else if (type === 1) {
     drawWallTile(screenX, screenY);
-  } else {
-    drawRuneTile(screenX, screenY);
+  } else if (type === 2) {
+    drawPipeTile(screenX, screenY);
+  } else if (type === 3) {
+    drawBrokenPipeTile(screenX, screenY, tx, ty);
   }
 }
 

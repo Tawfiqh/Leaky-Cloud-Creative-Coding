@@ -35,7 +35,7 @@ function drawHud() {
   textSize(14);
   noStroke();
   text(
-    "WASD / arrows — move   ·   E or Space — interact (face a rune tile)",
+    "WASD / arrows — move   ·   E — patch broken pipe (face it)",
     12,
     10
   );
@@ -54,7 +54,7 @@ function drawHud() {
     fill(255, 90, 70, 230);
     textAlign(CENTER, CENTER);
     textSize(28);
-    text("TIME'S UP", width / 2, height / 2 - 8);
+    text("Kernel Panic", width / 2, height / 2 - 8);
     textSize(14);
     fill(212, 204, 188, 200);
     text("Refresh the page to play again", width / 2, height / 2 + 22);
@@ -80,6 +80,7 @@ function draw() {
 
   const remaining = remainingSeconds();
   if (remaining > 0) {
+    updateRandomPipeBreaks();
     const axes = readInputAxes();
     tryMove(axes.ax * MOVE_SPEED, axes.ay * MOVE_SPEED);
   }
