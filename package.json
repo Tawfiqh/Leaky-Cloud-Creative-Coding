@@ -1,0 +1,13 @@
+{
+  "name": "creativecoding",
+  "version": "1.0.0",
+  "private": true,
+  "description": "p5.js top-down RPG (pipe patching) — static site for Cloudflare Pages",
+  "scripts": {
+    "pages:dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.79.0"
+  }
+}

@@ -84,6 +84,43 @@ function windowResized() {
   resizeCanvas(min(960, windowWidth - 16), min(640, windowHeight - 16));
 }
 
+function drawKernelPanicBackground() {
+  const ctx = drawingContext;
+  const cx = width * 0.5;
+  const cy = height * 0.48;
+  const r = max(width, height) * 0.95;
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, "rgba(72, 14, 22, 0.98)");
+  g.addColorStop(0.4, "rgba(18, 4, 8, 0.97)");
+  g.addColorStop(1, "rgba(0, 0, 0, 0.99)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, width, height);
+
+  stroke(255, 45, 55, 22);
+  strokeWeight(1);
+  for (let y = 0; y < height; y += 3) {
+    line(0, y + 0.5, width, y + 0.5);
+  }
+  noStroke();
+
+  const t = millis() * 0.001;
+  for (let i = 0; i < 48; i++) {
+    const x = (i * 97 + floor(t * 40)) % width;
+    const y = (i * 53) % height;
+    fill(26, 251, 76, 8 + (i % 5));
+    rect(x, y, 2, 2);
+  }
+
+  stroke(200, 40, 50, 90);
+  strokeWeight(2);
+  noFill();
+  rect(10, 10, width - 20, height - 20, 6);
+  stroke(HUD_GLOW.r, HUD_GLOW.g, HUD_GLOW.b, 35);
+  strokeWeight(1);
+  rect(14, 14, width - 28, height - 28, 4);
+  noStroke();
+}
+
 function drawHud() {
   const remaining = remainingSeconds();
   const over = isGameOver();
@@ -134,6 +171,7 @@ function drawHud() {
   textAlign(LEFT, TOP);
 
   if (over) {
+    drawKernelPanicBackground();
     const reason = gameOverReason();
     drawingContext.shadowBlur = 18;
     drawingContext.shadowColor = "rgba(255, 60, 60, 0.6)";
