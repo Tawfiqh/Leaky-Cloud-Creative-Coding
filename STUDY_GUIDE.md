@@ -23,6 +23,11 @@ A small p5.js top-down exploration sketch: move on a tile map, face directions, 
 
 - **Why:** If the user switches tabs or the window loses focus while holding a key, the browser may not deliver `keyup`. Clearing avoids phantom movement until the next real key press.
 
+### Look and feel (colors only; no gameplay change)
+
+- **Chosen:** A “velvet twilight” palette: deep violet letterbox (`background` in `top-down-rpg.js`), moss–jade grass, cool moonlit stone walls, amber + aqua rune accents, terracotta player, parchment HUD text. The HTML page uses a radial gradient behind the canvas and a soft shadow on the `<canvas>` so the playfield reads as a lit panel in a dark room.
+- **Why:** Keeps the same tile shapes and logic; only `fill` / `stroke` / CSS frame values changed for a cohesive, warm fantasy read without generic flat-blue UI.
+
 ## How Each Piece Works
 
 ### `initPlayerKeyboard` (in `rpg-player.js`)

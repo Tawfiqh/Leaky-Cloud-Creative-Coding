@@ -135,11 +135,11 @@ function drawPlayer(cam) {
   else if (facing.y < 0) ang = PI;
   else ang = 0;
   rotate(ang);
-  fill(70, 140, 255);
-  stroke(20, 50, 90);
+  fill(214, 122, 92);
+  stroke(92, 52, 42);
   strokeWeight(2);
   triangle(0, -12, -9, 10, 9, 10);
-  fill(255, 220, 160);
+  fill(255, 232, 212);
   noStroke();
   ellipse(0, 2, 10, 10);
   pop();

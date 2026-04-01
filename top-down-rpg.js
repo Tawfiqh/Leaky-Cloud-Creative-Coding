@@ -10,7 +10,7 @@ function windowResized() {
 }
 
 function drawHud() {
-  fill(240, 245, 250);
+  fill(212, 204, 188);
   textAlign(LEFT, TOP);
   textSize(14);
   noStroke();
@@ -20,16 +20,21 @@ function drawHud() {
     10
   );
   if (millis() < messageUntil && messageText) {
-    fill(20, 24, 32, 220);
+    fill(36, 30, 48, 238);
     rect(12, height - 52, min(width - 24, 420), 40, 8);
-    fill(220, 230, 255);
+    stroke(180, 150, 95, 90);
+    strokeWeight(1);
+    noFill();
+    rect(12.5, height - 51.5, min(width - 24, 420) - 1, 39, 7);
+    noStroke();
+    fill(248, 242, 228);
     textSize(15);
     text(messageText, 24, height - 42);
   }
 }
 
 function draw() {
-  background(15, 18, 26);
+  background(22, 18, 34);
 
   const axes = readInputAxes();
   tryMove(axes.ax * MOVE_SPEED, axes.ay * MOVE_SPEED);

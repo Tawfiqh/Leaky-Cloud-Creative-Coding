@@ -5,9 +5,9 @@ const MAP_ROWS = [
   "1000000000000000000000000001",
   "1000001111111111110000000001",
   "1000001000000000021000000001",
-  "1000001022222000021000000001",
+  "1000001022222000000000000001",
   "1000001020000200021000000001",
-  "1000001020000200021000000001",
+  "1000001020000000021000000001",
   "1000001022222200021000000001",
   "1000001000000000021000000001",
   "1000001111111111121000000001",
@@ -79,9 +79,9 @@ function cameraOffsetForPlayer(px, py, pw, ph) {
 
 function drawGrassTile(screenX, screenY, tx, ty) {
   const base = color(
-    52 + noise(tx * 0.31, ty * 0.29) * 28,
-    118 + noise(tx * 0.27, ty * 0.33) * 35,
-    72
+    42 + noise(tx * 0.31, ty * 0.29) * 26,
+    108 + noise(tx * 0.27, ty * 0.33) * 36,
+    88 + noise(tx * 0.19, ty * 0.21) * 14
   );
   fill(base);
   noStroke();
@@ -91,11 +91,11 @@ function drawGrassTile(screenX, screenY, tx, ty) {
     const s = tx * 928371 + ty * 19249 + i * 7919;
     const px = (s % 31) + 4;
     const py = ((s >> 5) % 31) + 4;
-    fill(40 + (s % 30), 100 + ((s >> 3) % 40), 55 + ((s >> 7) % 25), 180);
+    fill(48 + (s % 28), 124 + ((s >> 3) % 36), 72 + ((s >> 7) % 22), 175);
     ellipse(screenX + px, screenY + py, 3 + (s % 5));
   }
 
-  stroke(30, 80, 45, 40);
+  stroke(56, 112, 88, 42);
   strokeWeight(1);
   line(
     screenX + 4,
@@ -107,9 +107,9 @@ function drawGrassTile(screenX, screenY, tx, ty) {
 }
 
 function drawWallTile(screenX, screenY) {
-  fill(38, 42, 52);
+  fill(74, 78, 94);
   rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-  stroke(22, 26, 34);
+  stroke(48, 52, 66);
   strokeWeight(2);
   for (let i = 0; i < 4; i++) {
     line(
@@ -128,28 +128,28 @@ function drawWallTile(screenX, screenY) {
     );
   }
   noStroke();
-  fill(55, 60, 72, 90);
+  fill(108, 114, 132, 95);
   rect(screenX + 2, screenY + 2, TILE_SIZE - 4, 8);
 }
 
 function drawRuneTile(screenX, screenY) {
-  fill(28, 22, 48);
+  fill(32, 26, 52);
   rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
   push();
   translate(screenX + TILE_SIZE / 2, screenY + TILE_SIZE / 2);
   noFill();
-  stroke(160, 120, 255, 220);
+  stroke(212, 168, 96, 235);
   strokeWeight(2);
   for (let r = 8; r < TILE_SIZE / 2; r += 7) {
     arc(0, 0, r * 2, r * 2, -PI * 0.75, -PI * 0.25);
   }
-  stroke(100, 220, 255, 180);
+  stroke(110, 210, 198, 200);
   strokeWeight(1.5);
   for (let a = 0; a < 6; a++) {
     const ang = (TWO_PI / 6) * a - HALF_PI;
     line(cos(ang) * 6, sin(ang) * 6, cos(ang) * 16, sin(ang) * 16);
   }
-  fill(200, 240, 255, 90);
+  fill(255, 248, 220, 100);
   noStroke();
   ellipse(0, 0, 10, 10);
   pop();
