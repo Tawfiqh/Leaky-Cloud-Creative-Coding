@@ -2,13 +2,14 @@
 
 ## What We're Building
 
-A small p5.js top-down exploration sketch: move on a tile map, face directions, and interact with special tiles. It runs from `leaky-pipe.html`.
+A small p5.js top-down exploration sketch: move on a tile map, face directions, and interact with special tiles. A **30 second** countdown runs from the moment the sketch loads; the HUD shows remaining time (turning red in the last 10 seconds). The view **shakes** more and more as time runs out (quadratic panic curve). When time hits zero, movement and interact stop and a “TIME'S UP” message appears. It runs from `leaky-pipe.html`.
 
 ## How It Works (High Level)
 
 1. `setup()` creates the canvas, registers keyboard input, loads the world, and places the player on the start tile.
-2. Each frame, `readInputAxes()` turns held movement keys into a direction vector, then `tryMove()` applies speed and collision.
-3. The camera follows the player; the world and HUD draw on top.
+2. Each frame, if time remains, `readInputAxes()` turns held movement keys into a direction vector, then `tryMove()` applies speed and collision.
+3. The camera follows the player. The world and player are drawn inside a `translate(shake)` so the whole playfield jitters; shake amplitude scales with **panic factor** \(1 - t/30\) squared.
+4. The HUD draws instructions, the countdown (top right), optional interact messages, and a full-screen “TIME'S UP” overlay when the timer reaches zero.
 
 ## Key Decisions & Why
 
@@ -22,6 +23,13 @@ A small p5.js top-down exploration sketch: move on a tile map, face directions, 
 ### Clearing keys on blur / hidden document
 
 - **Why:** If the user switches tabs or the window loses focus while holding a key, the browser may not deliver `keyup`. Clearing avoids phantom movement until the next real key press.
+
+### Countdown + screen shake (tension)
+
+- **Chosen:** Wall-clock countdown from `millis()` in `setup()` (`gameStartMs`). Remaining time = `30 - (millis() - gameStartMs) / 1000`, clamped at 0. Panic factor = `1 - remaining/30`; shake uses `(panicFactor ** 2) * 14` pixels of random offset per axis so the last seconds feel worse than the first.
+- **Alternatives:** Frame-based timer (drops when tab is hidden); CSS shake on `<canvas>` (would not move HUD separately unless split).
+- **Why:** Real-time seconds match player expectations; separating shake into `push`/`translate`/`pop` around world + player keeps HUD labels readable.
+- **Tradeoff:** Timer includes time spent reading the first frame; no pause key yet.
 
 ### Look and feel (colors only; no gameplay change)
 

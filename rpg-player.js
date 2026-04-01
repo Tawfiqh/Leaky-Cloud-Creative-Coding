@@ -112,6 +112,7 @@ function facingNeighborTile() {
 }
 
 function tryInteract() {
+  if (typeof remainingSeconds === "function" && remainingSeconds() <= 0) return;
   const now = millis();
   if (now - lastInteractMs < INTERACT_DEBOUNCE_MS) return;
   lastInteractMs = now;
