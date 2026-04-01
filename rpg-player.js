@@ -112,7 +112,7 @@ function facingNeighborTile() {
 }
 
 function tryInteract() {
-  if (typeof remainingSeconds === "function" && remainingSeconds() <= 0) return;
+  if (typeof isGameOver === "function" && isGameOver()) return;
   const now = millis();
   if (now - lastInteractMs < INTERACT_DEBOUNCE_MS) return;
   lastInteractMs = now;
@@ -121,8 +121,9 @@ function tryInteract() {
   const t = tileWorld(n.tx, n.ty);
   if (t === 3) {
     if (patchBrokenPipeAt(n.tx, n.ty)) {
-      messageText = "Pipe patched!";
+      messageText = "Pipe patched! +time · cloud steadier";
       messageUntil = now + 2600;
+      if (typeof onPipeFixed === "function") onPipeFixed();
     }
   }
 }
@@ -138,11 +139,14 @@ function drawPlayer(cam) {
   else if (facing.y < 0) ang = PI;
   else ang = 0;
   rotate(ang);
-  fill(214, 122, 92);
-  stroke(92, 52, 42);
+  drawingContext.shadowBlur = 10;
+  drawingContext.shadowColor = "rgba(26, 251, 76, 0.55)";
+  fill(26, 251, 76);
+  stroke(8, 40, 18);
   strokeWeight(2);
   triangle(0, -12, -9, 10, 9, 10);
-  fill(255, 232, 212);
+  drawingContext.shadowBlur = 0;
+  fill(18, 90, 36);
   noStroke();
   ellipse(0, 2, 10, 10);
   pop();

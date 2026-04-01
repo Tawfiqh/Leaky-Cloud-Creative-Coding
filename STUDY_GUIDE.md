@@ -2,14 +2,14 @@
 
 ## What We're Building
 
-A small p5.js top-down exploration sketch: move on a tile map, face directions, and interact with special tiles. A **30 second** countdown runs from the moment the sketch loads; the HUD shows remaining time (turning red in the last 10 seconds). The view **shakes** more and more as time runs out (quadratic panic curve). When time hits zero, movement and interact stop and a “TIME'S UP” message appears. It runs from `leaky-pipe.html`.
+A small p5.js top-down exploration sketch: move on a tile map, face directions, and patch **broken pipe** tiles. A **deadline timer** (starting at 30s) counts down; patching adds time and restores **cloud bits**; random pipe breaks drain bits. The HUD shows time (Matrix green), score, and cloud pips. The view **shakes** more as time runs out. Game over shows **Kernel Panic**. It runs from `leaky-pipe.html`.
 
 ## How It Works (High Level)
 
 1. `setup()` creates the canvas, registers keyboard input, loads the world, and places the player on the start tile.
 2. Each frame, if time remains, `readInputAxes()` turns held movement keys into a direction vector, then `tryMove()` applies speed and collision.
 3. The camera follows the player. The world and player are drawn inside a `translate(shake)` so the whole playfield jitters; shake amplitude scales with **panic factor** \(1 - t/30\) squared.
-4. The HUD draws instructions, the countdown (top right), optional interact messages, and a full-screen “TIME'S UP” overlay when the timer reaches zero.
+4. The HUD draws instructions, score, cloud bits, the countdown (top right), optional interact messages, and a **Kernel Panic** overlay when the game ends.
 
 ## Key Decisions & Why
 
@@ -26,15 +26,15 @@ A small p5.js top-down exploration sketch: move on a tile map, face directions, 
 
 ### Countdown + screen shake (tension)
 
-- **Chosen:** Wall-clock countdown from `millis()` in `setup()` (`gameStartMs`). Remaining time = `30 - (millis() - gameStartMs) / 1000`, clamped at 0. Panic factor = `1 - remaining/30`; shake uses `(panicFactor ** 2) * 14` pixels of random offset per axis so the last seconds feel worse than the first.
+- **Chosen:** Deadline `gameEndMs` set in `setup()`; remaining time = `(gameEndMs - millis()) / 1000`. Patching moves `gameEndMs` forward. Panic factor = `1 - remaining / 30` (clamped); shake uses `(panicFactor ** 2) * 14` pixels per axis.
 - **Alternatives:** Frame-based timer (drops when tab is hidden); CSS shake on `<canvas>` (would not move HUD separately unless split).
 - **Why:** Real-time seconds match player expectations; separating shake into `push`/`translate`/`pop` around world + player keeps HUD labels readable.
 - **Tradeoff:** Timer includes time spent reading the first frame; no pause key yet.
 
-### Look and feel (colors only; no gameplay change)
+### Look and feel (Matrix + cloud + deep walkable)
 
-- **Chosen:** A “velvet twilight” palette: deep violet letterbox (`background` in `top-down-rpg.js`), moss–jade grass, cool moonlit stone walls, amber + aqua rune accents, terracotta player, parchment HUD text. The HTML page uses a radial gradient behind the canvas and a soft shadow on the `<canvas>` so the playfield reads as a lit panel in a dark room.
-- **Why:** Keeps the same tile shapes and logic; only `fill` / `stroke` / CSS frame values changed for a cohesive, warm fantasy read without generic flat-blue UI.
+- **Chosen:** Walkable tiles use **#010A03** (near-black deep green) with **layered `noise()`**, deterministic **speckle ellipses** (seeded by tile coords so nothing flickers), faint **horizontal scan lines**, two **diagonal scratches**, and sparse **#1AFB4C** micro-dots for a Matrix floor texture. **Walls** are **clouds on pure black** (overlapping white / pale blue ellipses). **Pipes** are drawn as a **top-down tube**: rounded shell, top highlight band, dark **bore** (hollow), **glowing rim ellipses** on the left/right ends, and a single **rounded outer glow** — not a grid of lines. **Broken pipes** reuse the pipe draw, add a glowing crack, and **`drawBinaryLeak`** animates drifting **0** and **1** with `millis()`. The canvas **background** is almost-black green `(2,8,5)`; HUD and timer lean **#1AFB4C**; the player avatar is the same accent with a green glow. The HTML page uses a **dark green radial gradient** and a faint green rim on the `<canvas>`.
+- **Why:** Matches the “pipes as Matrix infrastructure + cloud bits” theme; glow is done with `drawingContext.shadowBlur` + stroke, not extra assets.
 
 ## How Each Piece Works
 

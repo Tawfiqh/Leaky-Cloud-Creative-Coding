@@ -1,5 +1,10 @@
 const TILE_SIZE = 40;
 
+/** Styling (Todo): walkable, cloud walls, Matrix pipes + glow. */
+const COL_WALK = { r: 1, g: 10, b: 3 };
+const COL_PIPE_BASE = { r: 21, g: 131, b: 49 };
+const COL_PIPE_GLOW = { r: 26, g: 251, b: 76 };
+
 const MAP_ROWS = [
   "1111111111111111111111111111",
   "1000000000000000000000000001",
@@ -95,7 +100,7 @@ function collectPipeTilesOfType(typeId) {
 }
 
 function updateRandomPipeBreaks() {
-  if (typeof remainingSeconds === "function" && remainingSeconds() <= 0) return;
+  if (typeof isGameOver === "function" && isGameOver()) return;
   if (millis() < pipeBreakDueAtMs) return;
   scheduleNextPipeBreak();
 
@@ -103,6 +108,7 @@ function updateRandomPipeBreaks() {
   if (intact.length === 0) return;
   const pick = random(intact);
   mapGrid[pick.ty][pick.tx] = 3;
+  if (typeof onPipeSprungLeak === "function") onPipeSprungLeak();
 }
 
 function patchBrokenPipeAt(tx, ty) {
@@ -124,104 +130,182 @@ function cameraOffsetForPlayer(px, py, pw, ph) {
 }
 
 function drawGrassTile(screenX, screenY, tx, ty) {
-  const base = color(
-    42 + noise(tx * 0.31, ty * 0.29) * 26,
-    108 + noise(tx * 0.27, ty * 0.33) * 36,
-    88 + noise(tx * 0.19, ty * 0.21) * 14
-  );
-  fill(base);
+  fill(COL_WALK.r, COL_WALK.g, COL_WALK.b);
   noStroke();
   rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
 
-  for (let i = 0; i < 5; i++) {
+  const n1 = noise(tx * 0.31, ty * 0.29);
+  const n2 = noise(tx * 0.58 + 12, ty * 0.55 + 7);
+  fill(2 + n1 * 10, 12 + n1 * 22 + n2 * 14, 5 + n1 * 12, 75);
+  rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+  fill(1 + n2 * 8, 6 + n2 * 16, 3 + n2 * 9, 38);
+  rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+
+  for (let i = 0; i < 6; i++) {
     const s = tx * 928371 + ty * 19249 + i * 7919;
     const px = (s % 31) + 4;
     const py = ((s >> 5) % 31) + 4;
-    fill(48 + (s % 28), 124 + ((s >> 3) % 36), 72 + ((s >> 7) % 22), 175);
-    ellipse(screenX + px, screenY + py, 3 + (s % 5));
+    fill(
+      5 + (s % 16),
+      24 + ((s >> 3) % 38),
+      10 + ((s >> 7) % 22),
+      55 + (s % 55)
+    );
+    ellipse(screenX + px, screenY + py, 2 + (s % 4), 2 + (s % 3));
   }
 
-  stroke(56, 112, 88, 42);
+  stroke(12, 42, 22, 14);
+  strokeWeight(1);
+  for (let y = 4; y < TILE_SIZE - 2; y += 8) {
+    line(screenX + 2, screenY + y, screenX + TILE_SIZE - 2, screenY + y);
+  }
+  noStroke();
+
+  stroke(8, 30, 15, 22);
   strokeWeight(1);
   line(
-    screenX + 4,
-    screenY + TILE_SIZE - 4,
+    screenX + 3,
+    screenY + TILE_SIZE - 3,
+    screenX + TILE_SIZE - 3,
+    screenY + 3
+  );
+  noStroke();
+
+  for (let j = 0; j < 5; j++) {
+    const s = tx * 1409 + ty * 601 + j * 211;
+    const x = 3 + (s % 32);
+    const y = 3 + ((s >> 6) % 32);
+    fill(COL_PIPE_GLOW.r, COL_PIPE_GLOW.g, COL_PIPE_GLOW.b, 12 + (s % 22));
+    ellipse(screenX + x, screenY + y, 1.8, 1.8);
+  }
+
+  stroke(18, 55, 28, 16);
+  strokeWeight(1);
+  line(
     screenX + TILE_SIZE - 4,
-    screenY + 4
+    screenY + 4,
+    screenX + 4,
+    screenY + TILE_SIZE - 4
   );
   noStroke();
 }
 
 function drawWallTile(screenX, screenY) {
-  fill(74, 78, 94);
-  rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-  stroke(48, 52, 66);
-  strokeWeight(2);
-  for (let i = 0; i < 4; i++) {
-    line(
-      screenX + i * 10,
-      screenY,
-      screenX + i * 10 + TILE_SIZE,
-      screenY + TILE_SIZE
-    );
-  }
-  for (let j = 0; j < 4; j++) {
-    line(
-      screenX,
-      screenY + j * 10,
-      screenX + TILE_SIZE,
-      screenY + j * 10 - TILE_SIZE
-    );
-  }
+  fill(0, 0, 0);
   noStroke();
-  fill(108, 114, 132, 95);
-  rect(screenX + 2, screenY + 2, TILE_SIZE - 4, 8);
+  rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+  fill(255, 255, 255, 235);
+  ellipse(screenX + 10, screenY + 16, 20, 14);
+  ellipse(screenX + 20, screenY + 12, 22, 17);
+  ellipse(screenX + 30, screenY + 15, 18, 13);
+  fill(235, 242, 252, 215);
+  ellipse(screenX + 16, screenY + 24, 24, 15);
+  ellipse(screenX + 28, screenY + 26, 20, 12);
+  fill(218, 228, 242, 195);
+  ellipse(screenX + 22, screenY + 30, 26, 10);
+  stroke(200, 216, 236, 140);
+  strokeWeight(1);
+  noFill();
+  ellipse(screenX + 20, screenY + 18, 24, 18);
+  noStroke();
 }
 
-/** Mario-style green pipe (top-down): solid cylinder segment, blocked. */
+function setPipeGlow(shadowBlurPx) {
+  drawingContext.shadowBlur = shadowBlurPx;
+  drawingContext.shadowColor = "rgba(26, 251, 76, 0.55)";
+}
+
+function clearGlow() {
+  drawingContext.shadowBlur = 0;
+  drawingContext.shadowColor = "transparent";
+}
+
+/** Top-down pipe: horizontal cylinder + open bore + rim caps; few strokes, reads as a tube. */
 function drawPipeTile(screenX, screenY) {
-  fill(34, 112, 58);
-  rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-  stroke(12, 52, 28);
-  strokeWeight(2);
-  fill(52, 168, 88);
-  rect(screenX + 4, screenY + 8, TILE_SIZE - 8, TILE_SIZE - 16, 6);
+  const pad = 3;
+  const bodyX = screenX + pad;
+  const bodyY = screenY + pad;
+  const bodyW = TILE_SIZE - pad * 2;
+  const bodyH = TILE_SIZE - pad * 2;
+  const midY = screenY + TILE_SIZE / 2;
+
+  fill(COL_PIPE_BASE.r, COL_PIPE_BASE.g, COL_PIPE_BASE.b);
   noStroke();
-  fill(120, 220, 150, 110);
-  rect(screenX + 8, screenY + 10, TILE_SIZE - 22, TILE_SIZE - 20, 4);
-  stroke(12, 52, 28);
+  rect(bodyX, bodyY, bodyW, bodyH, 10);
+
+  fill(38, 155, 72);
+  rect(bodyX + 2, bodyY + 2, bodyW - 4, 9, 8);
+
+  fill(0, 35, 14);
+  rect(bodyX + 9, bodyY + 14, bodyW - 18, 12, 5);
+
+  fill(0, 18, 6);
+  rect(bodyX + 11, midY - 3, bodyW - 22, 6, 2);
+
+  setPipeGlow(12);
+  stroke(COL_PIPE_GLOW.r, COL_PIPE_GLOW.g, COL_PIPE_GLOW.b);
   strokeWeight(2);
   noFill();
-  rect(screenX + 4, screenY + 8, TILE_SIZE - 8, TILE_SIZE - 16, 6);
-  stroke(18, 70, 38);
-  line(screenX + 6, screenY + TILE_SIZE / 2, screenX + TILE_SIZE - 6, screenY + TILE_SIZE / 2);
+  rect(bodyX, bodyY, bodyW, bodyH, 10);
+  clearGlow();
+
+  setPipeGlow(10);
+  stroke(COL_PIPE_GLOW.r, COL_PIPE_GLOW.g, COL_PIPE_GLOW.b, 200);
+  strokeWeight(2);
+  noFill();
+  ellipse(bodyX + 7, midY, 9, 24);
+  ellipse(bodyX + bodyW - 7, midY, 9, 24);
+  clearGlow();
   noStroke();
-  fill(28, 96, 48);
-  ellipse(screenX + 7, screenY + TILE_SIZE / 2, 5, 12);
-  ellipse(screenX + TILE_SIZE - 7, screenY + TILE_SIZE / 2, 5, 12);
 }
 
-/** Broken pipe: crack + leak hint; still blocked until patched. */
+function drawBinaryLeak(screenX, screenY, tx, ty) {
+  const seed = tx * 10007 + ty * 7919;
+  const t = millis() * 0.0025;
+  push();
+  textAlign(CENTER, CENTER);
+  textSize(8);
+  const glow = drawingContext;
+  for (let k = 0; k < 10; k++) {
+    const s = seed + k * 31;
+    const col = (s % 9) - 4;
+    const row = ((t * 35 + s * 1.7) % (TILE_SIZE + 24)) - 10;
+    const wobble = sin(t * 3 + s * 0.1) * 4;
+    const ch = floor(t * 4 + s + k) % 2 === 0 ? "0" : "1";
+    glow.shadowBlur = 6;
+    glow.shadowColor = "rgba(26, 251, 76, 0.85)";
+    fill(COL_PIPE_GLOW.r, COL_PIPE_GLOW.g, COL_PIPE_GLOW.b, max(45, 200 - k * 12));
+    noStroke();
+    text(
+      ch,
+      screenX + TILE_SIZE / 2 + col * 4.5 + wobble,
+      screenY + row
+    );
+  }
+  glow.shadowBlur = 0;
+  pop();
+}
+
 function drawBrokenPipeTile(screenX, screenY, tx, ty) {
   drawPipeTile(screenX, screenY);
   push();
   translate(screenX + TILE_SIZE / 2, screenY + TILE_SIZE / 2);
-  stroke(40, 40, 48);
-  strokeWeight(2.5);
+  setPipeGlow(12);
+  stroke(COL_PIPE_GLOW.r, COL_PIPE_GLOW.g, COL_PIPE_GLOW.b);
+  strokeWeight(2.2);
   noFill();
-  line(-10, -6, 4, 8);
-  line(4, 8, 14, -4);
-  stroke(255, 180, 60, 200);
-  strokeWeight(1.5);
-  line(-8, -4, 2, 10);
+  line(-12, -4, 2, 10);
+  line(2, 10, 14, -6);
+  stroke(255, 100, 90, 180);
+  strokeWeight(1);
+  line(-10, -2, 0, 12);
+  clearGlow();
   noStroke();
-  const s = tx * 313 + ty * 919;
-  fill(120, 200, 255, 200);
-  for (let i = 0; i < 3; i++) {
-    const dy = 10 + (i * 7 + (s >> i) % 5) % 8;
-    ellipse(6 + i * 5 - 8, dy - 6, 3, 5);
-  }
+  fill(COL_PIPE_GLOW.r, COL_PIPE_GLOW.g, COL_PIPE_GLOW.b, 40);
+  ellipse(-2, 4, 16, 10);
   pop();
+
+  drawBinaryLeak(screenX, screenY, tx, ty);
 }
 
 function drawTile(tx, ty, type, ox, oy) {
